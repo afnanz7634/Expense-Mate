@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { useState, useEffect } from "react"
 import type { Account } from "@/lib/types"
+import { supabase } from "@/lib/supabaseClient"
 
 const mainNavItems = [
   {
@@ -36,11 +37,13 @@ export function DashboardSidebar() {
   }, [])
 
   const loadAccounts = async () => {
-    // TODO: Replace with your database query
-    // const { data } = await supabase.from("accounts").select("*").order("created_at", { ascending: true })
-    // if (data) {
-    //   setAccounts(data)
-    // }
+    const { data, error } = await supabase.from("accounts").select("*").order("created_at", { ascending: true })
+    if (error) {
+      console.error("Error loading accounts:", error.message)
+      // Optionally, set an error state to display in the UI
+    } else if (data) {
+      setAccounts(data)
+    }
   }
 
   return (
