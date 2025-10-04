@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ArrowLeft, Loader2 } from "lucide-react"
 import Link from "next/link"
 import type { AccountType } from "@/lib/types"
+import { supabase } from "@/lib/supabaseClient"
 
 const accountTypes: { value: AccountType; label: string }[] = [
   { value: "checking", label: "Checking" },
@@ -35,35 +36,35 @@ export default function NewAccountPage() {
     setLoading(true)
     setError(null)
 
-    // TODO: Replace with your auth and database logic
-    // const {
-    //   data: { user },
-    // } = await supabase.auth.getUser()
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser()
 
-    // if (!user) {
-    //   setError("You must be logged in")
-    //   setLoading(false)
-    //   return
-    // }
+    if (userError || !user) {
+      setError("You must be logged in")
+      setLoading(false)
+      return
+    }
 
-    // const { error: insertError } = await supabase.from("accounts").insert({
-    //   user_id: user.id,
-    //   name,
-    //   type,
-    //   balance: Number.parseFloat(balance) || 0,
-    //   currency,
-    // })
+    const { error: insertError } = await supabase.from("accounts").insert({
+      user_id: user.id,
+      name,
+      type,
+      balance: Number.parseFloat(balance) || 0,
+      currency,
+    })
 
-    // if (insertError) {
-    //   setError(insertError.message)
-    //   setLoading(false)
-    // } else {
-    //   router.push("/dashboard")
-    //   router.refresh()
-    // }
+    if (insertError) {
+      setError(insertError.message)
+      setLoading(false)
+    } else {
+      router.push("/dashboard")
+      router.refresh()
+    }
 
     setLoading(false)
-    setError("Database not connected. Please add your database integration.")
+    // setError("Database not connected. Please add your database integration.")
   }
 
   return (

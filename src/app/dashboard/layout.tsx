@@ -1,24 +1,15 @@
 import type React from "react"
 import { DashboardSidebar } from "@/components/dashboard-sidebar"
 import { DashboardHeader } from "@/components/dashboard-header"
+import { redirect } from "next/navigation"
+import { getSupabaseServerClient } from "@/lib/supabaseServer"
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
-  // TODO: Add Supabase authentication check here
-  // Example:
-  // const supabase = await createServerClient(...)
-  // const { data: { user } } = await supabase.auth.getUser()
-  // if (!user) {
-  //   redirect("/auth/login")
-  // }
 
-  // Placeholder user for development
-  const user = {
-    id: "placeholder-user-id",
-    email: "user@example.com",
-    app_metadata: {},
-    user_metadata: {},
-    aud: "authenticated",
-    created_at: new Date().toISOString(),
+  const supabase = await getSupabaseServerClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) {
+    redirect("/auth/login")
   }
 
   return (

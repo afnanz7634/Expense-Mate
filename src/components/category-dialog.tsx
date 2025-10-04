@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import type { Category, CategoryType } from "@/lib/types"
 import { Loader2 } from "lucide-react"
+import { supabase } from "@/lib/supabaseClient"
 
 const colorOptions = [
   { value: "#ef4444", label: "Red" },
@@ -54,49 +55,47 @@ export function CategoryDialog({ open, onClose, category }: CategoryDialogProps)
     setLoading(true)
     setError(null)
 
-    // TODO: Replace with your auth and database logic
-    // const {
-    //   data: { user },
-    // } = await supabase.auth.getUser()
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
 
-    // if (!user) {
-    //   setError("You must be logged in")
-    //   setLoading(false)
-    //   return
-    // }
+    if (!user) {
+      setError("You must be logged in")
+      setLoading(false)
+      return
+    }
 
-    // if (category) {
-    //   // Update existing category
-    //   const { error: updateError } = await supabase
-    //     .from("categories")
-    //     .update({ name, type, color })
-    //     .eq("id", category.id)
+    if (category) {
+      // Update existing category
+      const { error: updateError } = await supabase
+        .from("categories")
+        .update({ name, type, ...(color && { color }) }) // Conditionally include color
+        .eq("id", category.id)
 
-    //   if (updateError) {
-    //     setError(updateError.message)
-    //     setLoading(false)
-    //   } else {
-    //     onClose()
-    //   }
-    // } else {
-    //   // Create new category
-    //   const { error: insertError } = await supabase.from("categories").insert({
-    //     user_id: user.id,
-    //     name,
-    //     type,
-    //     color,
-    //   })
+      if (updateError) {
+        setError(updateError.message)
+        setLoading(false)
+      } else {
+        onClose()
+      }
+    } else {
+      // Create new category
+      const { error: insertError } = await supabase.from("categories").insert({
+        user_id: user.id,
+        name,
+        type,
+        ...(color && { color }), // Conditionally include color
+      })
 
-    //   if (insertError) {
-    //     setError(insertError.message)
-    //     setLoading(false)
-    //   } else {
-    //     onClose()
-    //   }
-    // }
+      if (insertError) {
+        setError(insertError.message)
+        setLoading(false)
+      } else {
+        onClose()
+      }
+    }
 
     setLoading(false)
-    setError("Database not connected. Please add your database integration.")
   }
 
   return (

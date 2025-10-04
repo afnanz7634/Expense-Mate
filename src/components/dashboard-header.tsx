@@ -5,13 +5,14 @@ import { ThemeToggle } from "@/components/theme-toggle"
 import { useRouter } from "next/navigation"
 import { LogOut } from "lucide-react"
 import type { User } from "@supabase/supabase-js"
+import { supabase } from "@/lib/supabaseClient"
 
 export function DashboardHeader({ user }: { user: User }) {
   const router = useRouter()
 
   const handleLogout = async () => {
     // TODO: Replace with your auth logout
-    // await supabase.auth.signOut()
+    await supabase.auth.signOut()
     router.push("/auth/login")
     router.refresh()
   }

@@ -5,42 +5,45 @@ import { ArrowLeft, ArrowUpRight, ArrowDownRight } from "lucide-react"
 import { notFound } from "next/navigation"
 import { format } from "date-fns"
 import { AccountChart } from "@/components/account-chart"
+import { getSupabaseServerClient } from "@/lib/supabaseServer"
 
 export default async function AccountDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
-  // TODO: Replace with your database client
-  // const supabase = await getSupabaseServerClient()
+  const supabase = await getSupabaseServerClient()
 
-  // const { data: account } = await supabase.from("accounts").select("*").eq("id", id).single()
-
-  // if (!account) {
-  //   notFound()
-  // }
-
-  // const { data: transactions } = await supabase
-  //   .from("transactions")
-  //   .select("*, category:categories(*)")
-  //   .eq("account_id", id)
-  //   .order("date", { ascending: false })
-  //   .limit(10)
-
-  // Get last 6 months for chart
-  const sixMonthsAgo = new Date()
-  sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6)
-  // const { data: chartTransactions } = await supabase
-  //   .from("transactions")
-  //   .select("*")
-  //   .eq("account_id", id)
-  //   .gte("date", sixMonthsAgo.toISOString().split("T")[0])
-  //   .order("date", { ascending: true })
-
-  const account: any = null
-  const transactions: any[] = []
-  const chartTransactions: any[] = []
+  const { data: account } = await supabase
+    .from("accounts")
+    .select("*")
+    .eq("id", id)
+    .single()
 
   if (!account) {
     notFound()
   }
+
+  const { data: transactions } = await supabase
+    .from("transactions")
+    .select("*, category:categories(*)")
+    .eq("account_id", id)
+    .order("date", { ascending: false })
+    .limit(10)
+
+  const sixMonthsAgo = new Date()
+  sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6)
+  const { data: chartTransactions } = await supabase
+    .from("transactions")
+    .select("*")
+    .eq("account_id", id)
+    .gte("date", sixMonthsAgo.toISOString().split("T")[0])
+    .order("date", { ascending: true })
+
+  // const account: any = null
+  // const transactions: any[] = []
+  // const chartTransactions: any[] = []
+
+  // if (!account) {
+  //   notFound()
+  // }
 
   const totalIncome =
     transactions?.filter((t) => t.type === "income").reduce((sum, t) => sum + Number(t.amount), 0) || 0

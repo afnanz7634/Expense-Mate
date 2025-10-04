@@ -9,6 +9,7 @@ import { TransactionDialog } from "@/components/transaction-dialog"
 import { TransactionFilters } from "@/components/transaction-filter"
 import { format } from "date-fns"
 import { exportToCSV } from "@/lib/export"
+import { supabase } from "@/lib/supabaseClient"
 
 interface TransactionWithDetails extends Transaction {
   account: Account
@@ -27,25 +28,31 @@ export default function TransactionsPage() {
 
   const loadTransactions = async () => {
     setLoading(true)
-    // TODO: Replace with your database query
-    // const { data } = await supabase
-    //   .from("transactions")
-    //   .select("*, account:accounts(*), category:categories(*)")
-    //   .order("date", { ascending: false })
-    // if (data) {
-    //   setTransactions(data as TransactionWithDetails[])
-    // }
+
+    const { data, error } = await supabase
+      .from("transactions")
+      .select("*, account:accounts(*), category:categories(*)")
+      .order("date", { ascending: false })
+
+    if (error) {
+      console.error("Error fetching transactions:", error.message)
+    } else if (data) {
+      setTransactions(data as TransactionWithDetails[])
+    }
+
     setLoading(false)
   }
 
   const handleDelete = async (id: string) => {
     if (!confirm("Are you sure you want to delete this transaction?")) return
 
-    // TODO: Replace with your database delete
-    // const { error } = await supabase.from("transactions").delete().eq("id", id)
-    // if (!error) {
-    //   loadTransactions()
-    // }
+    const { error } = await supabase.from("transactions").delete().eq("id", id)
+
+    if (error) {
+      console.error('Error Deleting Transaction:', error.message);
+    } else {
+      loadTransactions()
+    }
   }
 
   const handleEdit = (transaction: Transaction) => {
@@ -67,21 +74,39 @@ export default function TransactionsPage() {
     endDate?: string
   }) => {
     setLoading(true)
-    // TODO: Replace with your database query with filters
-    // let query = supabase
-    //   .from("transactions")
-    //   .select("*, account:accounts(*), category:categories(*)")
-    //   .order("date", { ascending: false })
 
-    // if (filters.accountId && filters.accountId !== "all") {
-    //   query = query.eq("account_id", filters.accountId)
-    // }
-    // ... apply other filters
+    let query = supabase
+      .from("transactions")
+      .select("*, account:accounts(*), category:categories(*)")
+      .order("date", { ascending: false })
 
-    // const { data } = await query
-    // if (data) {
-    //   setTransactions(data as TransactionWithDetails[])
-    // }
+    if (filters.accountId && filters.accountId !== "all") {
+      query = query.eq("account_id", filters.accountId)
+    }
+
+    if (filters.categoryId && filters.categoryId !== "all") {
+      query = query.eq("category_id", filters.categoryId)
+    }
+
+    if (filters.type && filters.type !== "all") {
+      query = query.eq("type", filters.type)
+    }
+
+    if (filters.startDate) {
+      query = query.gte("date", filters.startDate)
+    }
+
+    if (filters.endDate) {
+      query = query.lte("date", filters.endDate)
+    }
+
+    const { data, error } = await query
+    if (error) {
+      console.error("Error filtering transactions:", error.message)
+    } else if (data) {
+      setTransactions(data as TransactionWithDetails[])
+    }
+
     setLoading(false)
   }
 

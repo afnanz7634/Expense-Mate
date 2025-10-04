@@ -7,6 +7,7 @@ import { Plus, Pencil, Trash2 } from "lucide-react"
 import type { Category } from "@/lib/types"
 import { CategoryDialog } from "@/components/category-dialog"
 import { Badge } from "@/components/ui/badge"
+import { supabase } from "@/lib/supabaseClient"
 
 export default function CategoriesPage() {
   const [categories, setCategories] = useState<Category[]>([])
@@ -20,22 +21,26 @@ export default function CategoriesPage() {
 
   const loadCategories = async () => {
     setLoading(true)
-    // TODO: Replace with your database query
-    // const { data } = await supabase.from("categories").select("*").order("type", { ascending: true })
-    // if (data) {
-    //   setCategories(data)
-    // }
+
+    const { data, error } = await supabase.from("categories").select("*").order("type", { ascending: true })
+    if (error) {
+      console.error('Error Fetching Categories:', error.message);
+    } else if (data) {
+      setCategories(data as Category[])
+    }
+
     setLoading(false)
   }
 
   const handleDelete = async (id: string) => {
     if (!confirm("Are you sure you want to delete this category?")) return
 
-    // TODO: Replace with your database delete
-    // const { error } = await supabase.from("categories").delete().eq("id", id)
-    // if (!error) {
-    //   loadCategories()
-    // }
+    const { error } = await supabase.from("categories").delete().eq("id", id)
+    if (error) {
+        console.error('Error Deleting Category:', error.message);
+    } else {
+        loadCategories()
+    }
   }
 
   const handleEdit = (category: Category) => {
