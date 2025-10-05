@@ -6,9 +6,8 @@ import { cn } from "@/lib/utils"
 import { LayoutDashboard, Wallet, Tag, Receipt, Plus } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { useState, useEffect } from "react"
-import type { Account } from "@/lib/types"
-import { supabase } from "@/lib/supabaseClient"
+import { useEffect } from "react"
+import { useAccountStore } from "@/lib/stores/account-store"
 
 const mainNavItems = [
   {
@@ -30,21 +29,11 @@ const mainNavItems = [
 
 export function DashboardSidebar() {
   const pathname = usePathname()
-  const [accounts, setAccounts] = useState<Account[]>([])
+  const { accounts, loadAccounts } = useAccountStore()
 
   useEffect(() => {
     loadAccounts()
   }, [])
-
-  const loadAccounts = async () => {
-    const { data, error } = await supabase.from("accounts").select("*").order("created_at", { ascending: true })
-    if (error) {
-      console.error("Error loading accounts:", error.message)
-      // Optionally, set an error state to display in the UI
-    } else if (data) {
-      setAccounts(data)
-    }
-  }
 
   return (
     <div className="flex h-screen w-64 flex-col border-r bg-sidebar">

@@ -13,6 +13,8 @@ import { ArrowLeft, Loader2 } from "lucide-react"
 import Link from "next/link"
 import type { AccountType } from "@/lib/types"
 import { supabase } from "@/lib/supabaseClient"
+import { useAccountStore } from "@/lib/stores/account-store"
+import { toast } from "@/components/ui/use-toast"
 
 const accountTypes: { value: AccountType; label: string }[] = [
   { value: "checking", label: "Checking" },
@@ -31,6 +33,8 @@ export default function NewAccountPage() {
   const [error, setError] = useState<string | null>(null)
   const router = useRouter()
 
+  const { addAccount } = useAccountStore()
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
@@ -42,29 +46,44 @@ export default function NewAccountPage() {
     } = await supabase.auth.getUser()
 
     if (userError || !user) {
-      setError("You must be logged in")
+      toast({
+        title: "Authentication Error",
+        description: "You must be logged in",
+        variant: "destructive",
+      })
       setLoading(false)
       return
     }
 
-    const { error: insertError } = await supabase.from("accounts").insert({
-      user_id: user.id,
-      name,
-      type,
-      balance: Number.parseFloat(balance) || 0,
-      currency,
-    })
+    const { data: newAccount, error: insertError } = await supabase
+      .from("accounts")
+      .insert({
+        user_id: user.id,
+        name,
+        type,
+        balance: Number.parseFloat(balance) || 0,
+        currency,
+      })
+      .select()
+      .single()
 
     if (insertError) {
-      setError(insertError.message)
+      toast({
+        title: "Error",
+        description: insertError.message,
+        variant: "destructive",
+      })
       setLoading(false)
-    } else {
+    } else if (newAccount) {
+      addAccount(newAccount)
+      toast({
+        title: "Success",
+        description: "Account created successfully",
+      })
       router.push("/dashboard")
-      router.refresh()
     }
 
     setLoading(false)
-    // setError("Database not connected. Please add your database integration.")
   }
 
   return (

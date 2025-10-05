@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { toast } from "@/components/ui/use-toast"
 import { Loader2 } from "lucide-react"
 import { supabase } from "@/lib/supabaseClient"
 
@@ -20,7 +21,10 @@ export default function ForgetPasswordPage() {
 
     const handleForgetPassword = async () => {
         await supabase.auth.resetPasswordForEmail(email, { redirectTo: 'http://localhost:3000/auth/update-password' })
-        alert("If an account with that email exists, a password reset link has been sent.")
+        toast({
+          title: "Password Reset",
+          description: "If an account with that email exists, a password reset link has been sent.",
+        })
         router.push("/auth/login")
         
     }

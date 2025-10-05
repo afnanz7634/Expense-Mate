@@ -43,14 +43,25 @@ export function CategoryDialog({ open, onClose, category }: CategoryDialogProps)
     const { data, error } = await supabase
       .from("categories")
       .select("*")
-      .is("parent_id", null) // Only top-level categories
       .order("name", { ascending: true });
 
     if (error) {
       console.error("Error loading parent categories:", error);
     } else if (data) {
-      setAvailableParents(data);
+      // Filter out the current category and its descendants if editing
+      const filteredData = category 
+        ? data.filter(c => c.id !== category.id && !isDescendant(c, category.id, data))
+        : data;
+      setAvailableParents(filteredData);
     }
+  };
+
+  // Helper function to check if a category is a descendant of another
+  const isDescendant = (cat: Category, ancestorId: string, allCategories: Category[]): boolean => {
+    if (!cat.parent_id) return false;
+    if (cat.parent_id === ancestorId) return true;
+    const parent = allCategories.find(c => c.id === cat.parent_id);
+    return parent ? isDescendant(parent, ancestorId, allCategories) : false;
   };
 
   useEffect(() => {
@@ -159,6 +170,28 @@ export function CategoryDialog({ open, onClose, category }: CategoryDialogProps)
               <SelectContent>
                 <SelectItem value="income">Income</SelectItem>
                 <SelectItem value="expense">Expense</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="parent">Parent Category (Optional)</Label>
+            <Select 
+              value={parentId || ""} 
+              onValueChange={(value) => setParentId(value || null)} 
+              disabled={loading}
+            >
+              <SelectTrigger id="parent">
+                <SelectValue placeholder="Select a parent category" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">None (Top Level)</SelectItem>
+                {availableParents
+                  .filter(p => p.type === type) // Only show categories of same type
+                  .map((parent) => (
+                    <SelectItem key={parent.id} value={parent.id}>
+                      {parent.name}
+                    </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>

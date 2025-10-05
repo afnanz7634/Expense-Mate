@@ -3,7 +3,9 @@ import type { Metadata } from "next"
 import { GeistSans } from "geist/font/sans"
 import { GeistMono } from "geist/font/mono"
 import { Analytics } from "@vercel/analytics/next"
+import { ToastContainer } from "react-toastify"
 import "./globals.css"
+import "react-toastify/dist/ReactToastify.css"
 import { Suspense } from "react"
 
 export const metadata: Metadata = {
@@ -34,6 +36,7 @@ export default function RootLayout({
       <body className={`font-sans ${GeistSans.variable} ${GeistMono.variable}`}>
         <Suspense fallback={null}>{children}</Suspense>
         <Analytics />
+        <ToastContainer position="top-right" autoClose={3000} />
       </body>
     </html>
   )

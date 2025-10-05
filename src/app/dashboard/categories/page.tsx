@@ -9,12 +9,16 @@ import { CategoryDialog } from "@/components/category-dialog"
 import { Badge } from "@/components/ui/badge"
 import { supabase } from "@/lib/supabaseClient"
 import { CategoryItem } from "@/components/category-item"
+import { toast } from "react-toastify"
+import { ConfirmDialog } from "@/components/confirm-dialog"
 
 export default function CategoriesPage() {
   const [categories, setCategories] = useState<Category[]>([])
   const [loading, setLoading] = useState(true)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editingCategory, setEditingCategory] = useState<Category | null>(null)
+  const [deletingCategory, setDeletingCategory] = useState<string | null>(null)
+  const [isDeleting, setIsDeleting] = useState(false)
 
   useEffect(() => {
     loadCategories()
@@ -63,15 +67,66 @@ export default function CategoriesPage() {
     setLoading(false)
   }
 
-  const handleDelete = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this category?")) return
+  const handleDeleteClick = (id: string) => {
+    setDeletingCategory(id);
+  };
 
-    const { error } = await supabase.from("categories").delete().eq("id", id)
-    if (error) {
-        console.error('Error Deleting Category:', error.message);
-    } else {
-        loadCategories()
+  const handleDelete = async (id: string) => {
+    setIsDeleting(true);
+
+    // First check if category has any transactions
+    const { data: transactions, error: queryError } = await supabase
+      .from("transactions")
+      .select("id")
+      .eq("category_id", id)
+      .limit(1);
+
+    if (queryError) {
+      toast.error("Error checking transactions: " + queryError.message);
+      setIsDeleting(false);
+      setDeletingCategory(null);
+      return;
     }
+
+    if (transactions && transactions.length > 0) {
+      toast.error("Cannot delete this category because it has transactions. Please delete or reassign the transactions first.");
+      setIsDeleting(false);
+      setDeletingCategory(null);
+      return;
+    }
+
+    // Also check if category has any child categories
+    const { data: children, error: childrenError } = await supabase
+      .from("categories")
+      .select("id")
+      .eq("parent_id", id)
+      .limit(1);
+
+    if (childrenError) {
+      toast.error("Error checking child categories: " + childrenError.message);
+      setIsDeleting(false);
+      setDeletingCategory(null);
+      return;
+    }
+
+    if (children && children.length > 0) {
+      toast.error("Cannot delete this category because it has subcategories. Please delete the subcategories first.");
+      setIsDeleting(false);
+      setDeletingCategory(null);
+      return;
+    }
+
+    // If no transactions and no children, proceed with deletion
+    const { error: deleteError } = await supabase.from("categories").delete().eq("id", id)
+    if (deleteError) {
+      toast.error("Error deleting category: " + deleteError.message);
+    } else {
+      toast.success("Category deleted successfully");
+      loadCategories();
+    }
+    
+    setIsDeleting(false);
+    setDeletingCategory(null);
   }
 
   const handleEdit = (category: Category) => {
@@ -117,7 +172,7 @@ export default function CategoriesPage() {
                     key={category.id}
                     category={category}
                     onEdit={handleEdit}
-                    onDelete={handleDelete}
+                    onDelete={handleDeleteClick}
                     level={0}
                   />
                 ))}
@@ -143,7 +198,7 @@ export default function CategoriesPage() {
                     key={category.id}
                     category={category}
                     onEdit={handleEdit}
-                    onDelete={handleDelete}
+                    onDelete={handleDeleteClick}
                     level={0}
                   />
                 ))}
@@ -156,6 +211,16 @@ export default function CategoriesPage() {
       </div>
 
       <CategoryDialog open={dialogOpen} onClose={handleDialogClose} category={editingCategory} />
+      <ConfirmDialog
+        open={!!deletingCategory}
+        onOpenChange={(open) => !open && setDeletingCategory(null)}
+        title="Delete Category"
+        description="Are you sure you want to delete this category? This action cannot be undone."
+        confirmText="Delete"
+        loading={isDeleting}
+        variant="destructive"
+        onConfirm={() => deletingCategory && handleDelete(deletingCategory)}
+      />
     </div>
   )
 }

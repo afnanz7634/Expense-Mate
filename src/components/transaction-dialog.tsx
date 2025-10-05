@@ -5,6 +5,7 @@ import type React from "react"
 import { useState, useEffect } from "react"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
+import { toast } from "@/components/ui/use-toast"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
@@ -27,7 +28,6 @@ export function TransactionDialog({ open, onClose, transaction }: TransactionDia
   const [description, setDescription] = useState("")
   const [date, setDate] = useState(new Date().toISOString().split("T")[0])
   const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
   const [accounts, setAccounts] = useState<Account[]>([])
   const [categories, setCategories] = useState<Category[]>([])
 
@@ -54,7 +54,6 @@ export function TransactionDialog({ open, onClose, transaction }: TransactionDia
       setDescription("")
       setDate(new Date().toISOString().split("T")[0])
     }
-    setError(null)
   }, [transaction, open])
 
   const loadAccounts = async () => {
@@ -89,14 +88,17 @@ export function TransactionDialog({ open, onClose, transaction }: TransactionDia
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
-    setError(null)
 
     const {
       data: { user },
     } = await supabase.auth.getUser()
 
     if (!user) {
-      setError("You must be logged in")
+      toast({
+        title: "Authentication Error",
+        description: "You must be logged in",
+        variant: "destructive",
+      })
       setLoading(false)
       return
     }
@@ -116,9 +118,17 @@ export function TransactionDialog({ open, onClose, transaction }: TransactionDia
         .eq("id", transaction.id)
 
       if (updateError) {
-        setError(updateError.message)
+        toast({
+          title: "Error",
+          description: updateError.message,
+          variant: "destructive",
+        })
         setLoading(false)
       } else {
+        toast({
+          title: "Success",
+          description: "Transaction updated successfully",
+        })
         onClose()
       }
     } else {
@@ -134,9 +144,17 @@ export function TransactionDialog({ open, onClose, transaction }: TransactionDia
       })
 
       if (insertError) {
-        setError(insertError.message)
+        toast({
+          title: "Error",
+          description: insertError.message,
+          variant: "destructive",
+        })
         setLoading(false)
       } else {
+        toast({
+          title: "Success",
+          description: "Transaction created successfully",
+        })
         onClose()
       }
     }
@@ -154,7 +172,6 @@ export function TransactionDialog({ open, onClose, transaction }: TransactionDia
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
-          {error && <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">{error}</div>}
           <div className="space-y-2">
             <Label htmlFor="type">Type</Label>
             <Select value={type} onValueChange={(value) => setType(value as TransactionType)} disabled={loading}>

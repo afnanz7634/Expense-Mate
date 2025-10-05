@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Loader2 } from "lucide-react"
 import { supabase } from "@/lib/supabaseClient"
+import { toast } from "react-toastify"
 
 export default function LoginPage() {
     const [email, setEmail] = useState("")
@@ -25,10 +26,12 @@ export default function LoginPage() {
 
         const { error } = await supabase.auth.signInWithPassword({ email, password })
         if (error) {
-            setError(error.message)
+            toast.error(error.message)
             setLoading(false)
+            return
         }
 
+        toast.success("Logged in successfully")
         router.push("/dashboard")
         router.refresh()
 
@@ -75,21 +78,23 @@ export default function LoginPage() {
                      
                     </CardContent>
                     <CardFooter className="flex flex-col space-y-4">
-                           <div className="text-right w-full">
-                            <Link href="/auth/forgetPassword" className="font-medium text-primary cursor-pointer hover:underline">
-                                Forget Password 
-                            </Link>
+                        <div className="w-full space-y-4">
+                            <Button type="submit" className="w-full" disabled={loading}>
+                                {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                Sign in
+                            </Button>
+                            <div className="flex justify-between items-center text-sm text-muted-foreground">
+                                <div className="flex items-center gap-1">
+                                    Don't have an account?
+                                    <Link href="/auth/signup" className="font-medium text-primary hover:underline">
+                                        Sign up
+                                    </Link>
+                                </div>
+                                <Link href="/auth/forgot-password" className="font-medium text-primary hover:underline">
+                                    Forgot password?
+                                </Link>
+                            </div>
                         </div>
-                        <Button type="submit" className="w-full" disabled={loading}>
-                            {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                            Sign in
-                        </Button>
-                        <p className="text-center text-sm text-muted-foreground">
-                            Don't have an account?{" "}
-                            <Link href="/auth/signup" className="font-medium text-primary hover:underline">
-                                Sign up
-                            </Link>
-                        </p>
                     </CardFooter>
                 </form>
             </Card>
