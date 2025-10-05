@@ -19,7 +19,13 @@ export interface Category {
   name: string
   type: CategoryType
   color: string | null
+  parent_id: string | null
+  path: string[]
   created_at: string
+}
+
+export interface CategoryWithChildren extends Category {
+  children?: CategoryWithChildren[]
 }
 
 export interface Transaction {

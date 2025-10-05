@@ -11,42 +11,28 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Loader2 } from "lucide-react"
 import { supabase } from "@/lib/supabaseClient"
 
-export default function LoginPage() {
+export default function ForgetPasswordPage() {
     const [email, setEmail] = useState("")
-    const [password, setPassword] = useState("")
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
     const router = useRouter()
 
-    const handleLogin = async (e: React.FormEvent) => {
-        e.preventDefault()
-        setLoading(true)
-        setError(null)
 
-        const { error } = await supabase.auth.signInWithPassword({ email, password })
-        if (error) {
-            setError(error.message)
-            setLoading(false)
-        }
-
-        router.push("/dashboard")
-        router.refresh()
-
-        // setTimeout(() => {
-        //     setError("Authentication not configured. Please add Supabase integration.")
-        //     setLoading(false)
-        // }, 1000)
+    const handleForgetPassword = async () => {
+        await supabase.auth.resetPasswordForEmail(email, { redirectTo: 'http://localhost:3000/auth/update-password' })
+        alert("If an account with that email exists, a password reset link has been sent.")
+        router.push("/auth/login")
+        
     }
-
 
     return (
         <div className="flex min-h-screen items-center justify-center bg-muted/40 p-4">
             <Card className="w-full max-w-md">
                 <CardHeader className="space-y-1">
-                    <CardTitle className="text-2xl font-bold">Welcome back</CardTitle>
-                    <CardDescription>Enter your credentials to access your account</CardDescription>
+                    <CardTitle className="text-2xl font-bold"> Forget Password</CardTitle>
+                    <CardDescription>Enter your email to reset your password</CardDescription>
                 </CardHeader>
-                <form onSubmit={handleLogin}>
+                <form onSubmit={handleForgetPassword}>
                     <CardContent className="space-y-4">
                         {error && <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">{error}</div>}
                         <div className="space-y-2">
@@ -61,33 +47,17 @@ export default function LoginPage() {
                                 disabled={loading}
                             />
                         </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="password">Password</Label>
-                            <Input
-                                id="password"
-                                type="password"
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                required
-                                disabled={loading}
-                            />
-                        </div>
-                     
+                       
                     </CardContent>
                     <CardFooter className="flex flex-col space-y-4">
-                           <div className="text-right w-full">
-                            <Link href="/auth/forgetPassword" className="font-medium text-primary cursor-pointer hover:underline">
-                                Forget Password 
-                            </Link>
-                        </div>
                         <Button type="submit" className="w-full" disabled={loading}>
                             {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                            Sign in
+                            Submit
                         </Button>
                         <p className="text-center text-sm text-muted-foreground">
-                            Don't have an account?{" "}
-                            <Link href="/auth/signup" className="font-medium text-primary hover:underline">
-                                Sign up
+                            back to Login?{" "}
+                            <Link href="/auth/login" className="font-medium text-primary hover:underline">
+                                Login
                             </Link>
                         </p>
                     </CardFooter>

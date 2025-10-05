@@ -34,18 +34,42 @@ export function CategoryDialog({ open, onClose, category }: CategoryDialogProps)
   const [name, setName] = useState("")
   const [type, setType] = useState<CategoryType>("expense")
   const [color, setColor] = useState("#ef4444")
+  const [parentId, setParentId] = useState<string | null>(null)
+  const [availableParents, setAvailableParents] = useState<Category[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  const loadParentCategories = async () => {
+    const { data, error } = await supabase
+      .from("categories")
+      .select("*")
+      .is("parent_id", null) // Only top-level categories
+      .order("name", { ascending: true });
+
+    if (error) {
+      console.error("Error loading parent categories:", error);
+    } else if (data) {
+      setAvailableParents(data);
+    }
+  };
+
+  useEffect(() => {
+    if (open) {
+      loadParentCategories();
+    }
+  }, [open]);
 
   useEffect(() => {
     if (category) {
       setName(category.name)
       setType(category.type)
       setColor(category.color || "#ef4444")
+      setParentId(category.parent_id)
     } else {
       setName("")
       setType("expense")
       setColor("#ef4444")
+      setParentId(null)
     }
     setError(null)
   }, [category, open])
@@ -69,7 +93,12 @@ export function CategoryDialog({ open, onClose, category }: CategoryDialogProps)
       // Update existing category
       const { error: updateError } = await supabase
         .from("categories")
-        .update({ name, type, ...(color && { color }) }) // Conditionally include color
+        .update({ 
+          name, 
+          type, 
+          parent_id: parentId,
+          ...(color && { color }) 
+        })
         .eq("id", category.id)
 
       if (updateError) {
@@ -84,6 +113,7 @@ export function CategoryDialog({ open, onClose, category }: CategoryDialogProps)
         user_id: user.id,
         name,
         type,
+        parent_id: parentId,
         ...(color && { color }), // Conditionally include color
       })
 
@@ -129,6 +159,28 @@ export function CategoryDialog({ open, onClose, category }: CategoryDialogProps)
               <SelectContent>
                 <SelectItem value="income">Income</SelectItem>
                 <SelectItem value="expense">Expense</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="parent">Parent Category (Optional)</Label>
+            <Select 
+              value={parentId || "none"} 
+              onValueChange={(value) => setParentId(value === "none" ? null : value)} 
+              disabled={loading}
+            >
+              <SelectTrigger id="parent">
+                <SelectValue placeholder="Select a parent category" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">No Parent (Top Level)</SelectItem>
+                {availableParents
+                  .filter(p => p.type === type && (!category || p.id !== category.id))
+                  .map((parent) => (
+                    <SelectItem key={parent.id} value={parent.id}>
+                      {parent.name}
+                    </SelectItem>
+                  ))}
               </SelectContent>
             </Select>
           </div>

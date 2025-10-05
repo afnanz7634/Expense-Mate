@@ -4,10 +4,11 @@ import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Plus, Pencil, Trash2 } from "lucide-react"
-import type { Category } from "@/lib/types"
+import type { Category, CategoryWithChildren } from "@/lib/types"
 import { CategoryDialog } from "@/components/category-dialog"
 import { Badge } from "@/components/ui/badge"
 import { supabase } from "@/lib/supabaseClient"
+import { CategoryItem } from "@/components/category-item"
 
 export default function CategoriesPage() {
   const [categories, setCategories] = useState<Category[]>([])
@@ -19,10 +20,40 @@ export default function CategoriesPage() {
     loadCategories()
   }, [])
 
+  const buildCategoryTree = (categories: Category[]): CategoryWithChildren[] => {
+    const categoryMap = new Map<string, CategoryWithChildren>();
+    const rootCategories: CategoryWithChildren[] = [];
+
+    // First pass: Create category objects
+    categories.forEach(cat => {
+      categoryMap.set(cat.id, { ...cat, children: [] });
+    });
+
+    // Second pass: Build the tree
+    categories.forEach(cat => {
+      const category = categoryMap.get(cat.id)!;
+      if (cat.parent_id) {
+        const parent = categoryMap.get(cat.parent_id);
+        if (parent) {
+          parent.children?.push(category);
+        }
+      } else {
+        rootCategories.push(category);
+      }
+    });
+
+    return rootCategories;
+  };
+
   const loadCategories = async () => {
     setLoading(true)
 
-    const { data, error } = await supabase.from("categories").select("*").order("type", { ascending: true })
+    const { data, error } = await supabase
+      .from("categories")
+      .select("*")
+      .order("type", { ascending: true })
+      .order("name", { ascending: true });
+
     if (error) {
       console.error('Error Fetching Categories:', error.message);
     } else if (data) {
@@ -81,24 +112,14 @@ export default function CategoriesPage() {
           <CardContent>
             {incomeCategories.length > 0 ? (
               <div className="space-y-2">
-                {incomeCategories.map((category) => (
-                  <div
+                {buildCategoryTree(incomeCategories).map((category) => (
+                  <CategoryItem
                     key={category.id}
-                    className="flex items-center justify-between rounded-lg border p-3 transition-colors hover:bg-muted/50"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="h-4 w-4 rounded-full" style={{ backgroundColor: category.color || "#22c55e" }} />
-                      <span className="font-medium">{category.name}</span>
-                    </div>
-                    <div className="flex gap-1">
-                      <Button variant="ghost" size="icon" onClick={() => handleEdit(category)}>
-                        <Pencil className="h-4 w-4" />
-                      </Button>
-                      <Button variant="ghost" size="icon" onClick={() => handleDelete(category.id)}>
-                        <Trash2 className="h-4 w-4 text-destructive" />
-                      </Button>
-                    </div>
-                  </div>
+                    category={category}
+                    onEdit={handleEdit}
+                    onDelete={handleDelete}
+                    level={0}
+                  />
                 ))}
               </div>
             ) : (
@@ -117,24 +138,14 @@ export default function CategoriesPage() {
           <CardContent>
             {expenseCategories.length > 0 ? (
               <div className="space-y-2">
-                {expenseCategories.map((category) => (
-                  <div
+                {buildCategoryTree(expenseCategories).map((category) => (
+                  <CategoryItem
                     key={category.id}
-                    className="flex items-center justify-between rounded-lg border p-3 transition-colors hover:bg-muted/50"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="h-4 w-4 rounded-full" style={{ backgroundColor: category.color || "#ef4444" }} />
-                      <span className="font-medium">{category.name}</span>
-                    </div>
-                    <div className="flex gap-1">
-                      <Button variant="ghost" size="icon" onClick={() => handleEdit(category)}>
-                        <Pencil className="h-4 w-4" />
-                      </Button>
-                      <Button variant="ghost" size="icon" onClick={() => handleDelete(category.id)}>
-                        <Trash2 className="h-4 w-4 text-destructive" />
-                      </Button>
-                    </div>
-                  </div>
+                    category={category}
+                    onEdit={handleEdit}
+                    onDelete={handleDelete}
+                    level={0}
+                  />
                 ))}
               </div>
             ) : (
