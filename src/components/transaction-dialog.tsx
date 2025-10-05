@@ -11,6 +11,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import type { Transaction, Account, Category, TransactionType } from "@/lib/types"
 import { Loader2 } from "lucide-react"
+import { supabase } from "@/lib/supabaseClient"
 
 interface TransactionDialogProps {
   open: boolean
@@ -57,22 +58,24 @@ export function TransactionDialog({ open, onClose, transaction }: TransactionDia
   }, [transaction, open])
 
   const loadAccounts = async () => {
-    // TODO: Replace with your database query
-    // const { data } = await supabase.from("accounts").select("*").order("name", { ascending: true })
-    // if (data) {
-    //   setAccounts(data)
-    //   if (!transaction && data.length > 0) {
-    //     setAccountId(data[0].id)
-    //   }
-    // }
+    const { data, error } = await supabase.from("accounts").select("*").order("name", { ascending: true })
+    if (error) {
+      console.error("Error loading accounts:", error.message)
+    } else if (data) {
+      setAccounts(data)
+      if (!transaction && data.length > 0) {
+        setAccountId(data[0].id)
+      }
+    }
   }
 
   const loadCategories = async () => {
-    // TODO: Replace with your database query
-    // const { data } = await supabase.from("categories").select("*").order("name", { ascending: true })
-    // if (data) {
-    //   setCategories(data)
-    // }
+    const { data, error } = await supabase.from("categories").select("*").order("name", { ascending: true })
+    if (error) {
+      console.error("Error loading categories:", error.message)
+    } else if (data) {
+      setCategories(data)
+    }
   }
 
   const filteredCategories = categories.filter((c) => c.type === type)
@@ -88,59 +91,57 @@ export function TransactionDialog({ open, onClose, transaction }: TransactionDia
     setLoading(true)
     setError(null)
 
-    // TODO: Replace with your auth and database logic
-    // const {
-    //   data: { user },
-    // } = await supabase.auth.getUser()
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
 
-    // if (!user) {
-    //   setError("You must be logged in")
-    //   setLoading(false)
-    //   return
-    // }
+    if (!user) {
+      setError("You must be logged in")
+      setLoading(false)
+      return
+    }
 
-    // if (transaction) {
-    //   // Update existing transaction
-    //   const { error: updateError } = await supabase
-    //     .from("transactions")
-    //     .update({
-    //       account_id: accountId,
-    //       category_id: categoryId,
-    //       amount: Number.parseFloat(amount),
-    //       type,
-    //       description,
-    //       date,
-    //     })
-    //     .eq("id", transaction.id)
+    if (transaction) {
+      // Update existing transaction
+      const { error: updateError } = await supabase
+        .from("transactions")
+        .update({
+          account_id: accountId,
+          category_id: categoryId,
+          amount: Number.parseFloat(amount),
+          type,
+          description,
+          date,
+        })
+        .eq("id", transaction.id)
 
-    //   if (updateError) {
-    //     setError(updateError.message)
-    //     setLoading(false)
-    //   } else {
-    //     onClose()
-    //   }
-    // } else {
-    //   // Create new transaction
-    //   const { error: insertError } = await supabase.from("transactions").insert({
-    //     user_id: user.id,
-    //     account_id: accountId,
-    //     category_id: categoryId,
-    //     amount: Number.parseFloat(amount),
-    //     type,
-    //     description,
-    //     date,
-    //   })
+      if (updateError) {
+        setError(updateError.message)
+        setLoading(false)
+      } else {
+        onClose()
+      }
+    } else {
+      // Create new transaction
+      const { error: insertError } = await supabase.from("transactions").insert({
+        user_id: user.id,
+        account_id: accountId,
+        category_id: categoryId,
+        amount: Number.parseFloat(amount),
+        type,
+        description,
+        date,
+      })
 
-    //   if (insertError) {
-    //     setError(insertError.message)
-    //     setLoading(false)
-    //   } else {
-    //     onClose()
-    //   }
-    // }
+      if (insertError) {
+        setError(insertError.message)
+        setLoading(false)
+      } else {
+        onClose()
+      }
+    }
 
     setLoading(false)
-    setError("Database not connected. Please add your database integration.")
   }
 
   return (

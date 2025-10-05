@@ -132,6 +132,7 @@ export default function NewAccountPage() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="USD">USD</SelectItem>
+                    <SelectItem value="PKR">PKR</SelectItem>
                     <SelectItem value="EUR">EUR</SelectItem>
                     <SelectItem value="GBP">GBP</SelectItem>
                     <SelectItem value="JPY">JPY</SelectItem>
