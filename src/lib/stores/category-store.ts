@@ -46,7 +46,9 @@ export const useCategoryStore = create<CategoryStore>((set, get) => ({
       .order("name", { ascending: true })
 
     if (data) {
+      console.log("Raw categories from DB:", data);
       const categoryTree = buildCategoryTree(data)
+      console.log("Category tree after building:", categoryTree);
       set({ categories: categoryTree })
     }
   },
