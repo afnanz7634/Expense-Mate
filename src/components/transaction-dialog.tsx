@@ -14,6 +14,7 @@ import type { Transaction, Account, Category, TransactionType } from "@/lib/type
 import { Loader2 } from "lucide-react"
 import { supabase } from "@/lib/supabaseClient"
 import { useAccountStore } from "@/lib/stores/account-store"
+import { TreeSelect } from "./ui/tree-select"
 
 interface TransactionDialogProps {
   open: boolean
@@ -31,6 +32,7 @@ export function TransactionDialog({ open, onClose, transaction }: TransactionDia
   const [loading, setLoading] = useState(false)
   const [accounts, setAccounts] = useState<Account[]>([])
   const [categories, setCategories] = useState<Category[]>([])
+   const [parentId, setParentId] = useState<string | null>(null)
 
   useEffect(() => {
     if (open) {
@@ -110,7 +112,7 @@ export function TransactionDialog({ open, onClose, transaction }: TransactionDia
         .from("transactions")
         .update({
           account_id: accountId,
-          category_id: categoryId,
+          category_id: parentId,
           amount: Number.parseFloat(amount),
           type,
           description,
@@ -138,7 +140,7 @@ export function TransactionDialog({ open, onClose, transaction }: TransactionDia
       const { error: insertError } = await supabase.from("transactions").insert({
         user_id: user.id,
         account_id: accountId,
-        category_id: categoryId,
+        category_id: parentId,
         amount: Number.parseFloat(amount),
         type,
         description,
@@ -202,7 +204,18 @@ export function TransactionDialog({ open, onClose, transaction }: TransactionDia
               </SelectContent>
             </Select>
           </div>
-          <div className="space-y-2">
+           <div className="space-y-2">
+                      <Label htmlFor="parent">Parent Category (Optional)</Label>
+                      <TreeSelect
+                        value={parentId}
+                        onChange={setParentId}
+                        categories={categories.filter(c => c.type === type )}
+                        placeholder="Select a parent category"
+                        disabled={loading}
+                        selectOnlyLeaf={true}
+                      />
+                    </div>
+          {/* <div className="space-y-2">
             <Label htmlFor="category">Category</Label>
             <Select value={categoryId} onValueChange={setCategoryId} disabled={loading}>
               <SelectTrigger id="category">
@@ -219,7 +232,7 @@ export function TransactionDialog({ open, onClose, transaction }: TransactionDia
                 ))}
               </SelectContent>
             </Select>
-          </div>
+          </div> */}
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor="amount">Amount</Label>
