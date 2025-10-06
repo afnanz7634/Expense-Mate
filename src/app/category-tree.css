@@ -1,0 +1,7 @@
+.category-tree-dropdown {
+  z-index: 99999 !important;
+}
+
+.ant-select-tree-dropdown {
+  z-index: 99999 !important;
+}

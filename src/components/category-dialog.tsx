@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import type { Category, CategoryType } from "@/lib/types"
+import { TreeSelect } from "@/components/ui/tree-select"
 import { Loader2 } from "lucide-react"
 import { supabase } from "@/lib/supabaseClient"
 
@@ -63,25 +64,10 @@ export function CategoryDialog({ open, onClose, category }: CategoryDialogProps)
   const [type, setType] = useState<CategoryType>("expense")
   const [color, setColor] = useState("#ef4444")
   const [parentId, setParentId] = useState<string | null>(null)
-  const [availableParents, setAvailableParents] = useState<Category[]>([])
+  const [categories, setCategories] = useState<Category[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const loadParentCategories = async () => {
-    const { data, error } = await supabase
-      .from("categories")
-      .select("*")
-      .order("name", { ascending: true })
-
-    if (error) {
-      console.error("Error loading parent categories:", error)
-    } else if (data) {
-      const filteredData = category
-        ? data.filter((c) => c.id !== category.id && !isDescendant(c, category.id, data))
-        : data
-      setAvailableParents(filteredData)
-    }
-  }
 
   // Helper function to check if a category is a descendant of another
   const isDescendant = (cat: Category, ancestorId: string, allCategories: Category[]): boolean => {
@@ -91,11 +77,15 @@ export function CategoryDialog({ open, onClose, category }: CategoryDialogProps)
     return parent ? isDescendant(parent, ancestorId, allCategories) : false
   }
 
+
   useEffect(() => {
     if (open) {
-      loadParentCategories()
+      supabase
+        .from("categories")
+        .select("*")
+        .then(({ data }) => setCategories(data || []))
     }
-  }, [open, loadParentCategories])
+  }, [open])
 
   useEffect(() => {
     if (category) {
@@ -232,28 +222,16 @@ export function CategoryDialog({ open, onClose, category }: CategoryDialogProps)
             </Select>
           </div>
 
-          {/* Parent Category */}
+          {/* Parent Category (TreeSelect) */}
           <div className="space-y-2">
             <Label htmlFor="parent">Parent Category (Optional)</Label>
-            <Select
-              value={parentId || "none"}
-              onValueChange={(value) => setParentId(value === "none" ? null : value)}
+            <TreeSelect
+              value={parentId}
+              onChange={setParentId}
+              categories={categories.filter(c => c.type === type && (!category || c.id !== category.id))}
+              placeholder="Select a parent category"
               disabled={loading}
-            >
-              <SelectTrigger id="parent">
-                <SelectValue placeholder="Select a parent category" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="none">No Parent (Top Level)</SelectItem>
-                {availableParents
-                  .filter((p) => p.type === type && (!category || p.id !== category.id))
-                  .map((parent) => (
-                    <SelectItem key={parent.id} value={parent.id}>
-                      {parent.name}
-                    </SelectItem>
-                  ))}
-              </SelectContent>
-            </Select>
+            />
           </div>
 
           {/* Color Selector */}
