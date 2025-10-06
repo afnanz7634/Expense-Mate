@@ -25,7 +25,9 @@ export function TransactionFilters({ onFilter }: TransactionFiltersProps) {
   const [type, setType] = useState<string>("all")
   const [startDate, setStartDate] = useState<string>("")
   const [endDate, setEndDate] = useState<string>("")
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [accounts, setAccounts] = useState<Account[]>([])
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [categories, setCategories] = useState<Category[]>([])
 
   useEffect(() => {

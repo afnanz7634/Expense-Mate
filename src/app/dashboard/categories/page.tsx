@@ -15,7 +15,7 @@ import { ConfirmDialog } from "@/components/confirm-dialog"
 import { useCategoryStore } from "@/lib/stores/category-store"
 
 export default function CategoriesPage() {
-  const { categories, loadCategories, removeCategory } = useCategoryStore()
+  const { categories, loadCategories } = useCategoryStore()
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editingCategory, setEditingCategory] = useState<Category | null>(null)
   const [deletingCategory, setDeletingCategory] = useState<string | null>(null)
@@ -25,30 +25,30 @@ export default function CategoriesPage() {
     loadCategories()
   }, [loadCategories])
 
-  const buildCategoryTree = (categories: Category[]): CategoryWithChildren[] => {
-    const categoryMap = new Map<string, CategoryWithChildren>();
-    const rootCategories: CategoryWithChildren[] = [];
+  // const buildCategoryTree = (categories: Category[]): CategoryWithChildren[] => {
+  //   const categoryMap = new Map<string, CategoryWithChildren>();
+  //   const rootCategories: CategoryWithChildren[] = [];
 
-    // First pass: Create category objects
-    categories.forEach(cat => {
-      categoryMap.set(cat.id, { ...cat, children: [] });
-    });
+  //   // First pass: Create category objects
+  //   categories.forEach(cat => {
+  //     categoryMap.set(cat.id, { ...cat, children: [] });
+  //   });
 
-    // Second pass: Build the tree
-    categories.forEach(cat => {
-      const category = categoryMap.get(cat.id)!;
-      if (cat.parent_id) {
-        const parent = categoryMap.get(cat.parent_id);
-        if (parent) {
-          parent.children?.push(category);
-        }
-      } else {
-        rootCategories.push(category);
-      }
-    });
+  //   // Second pass: Build the tree
+  //   categories.forEach(cat => {
+  //     const category = categoryMap.get(cat.id)!;
+  //     if (cat.parent_id) {
+  //       const parent = categoryMap.get(cat.parent_id);
+  //       if (parent) {
+  //         parent.children?.push(category);
+  //       }
+  //     } else {
+  //       rootCategories.push(category);
+  //     }
+  //   });
 
-    return rootCategories;
-  };
+  //   return rootCategories;
+  // };
 
   const handleDeleteClick = (id: string) => {
     setDeletingCategory(id);

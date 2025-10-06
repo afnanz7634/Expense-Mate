@@ -9,7 +9,7 @@ interface AccountStore {
   removeAccount: (accountId: string) => void
 }
 
-export const useAccountStore = create<AccountStore>((set, get) => ({
+export const useAccountStore = create<AccountStore>((set) => ({
   accounts: [],
 
   loadAccounts: async () => {

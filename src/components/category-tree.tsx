@@ -1,7 +1,7 @@
 "use client"
 
 import { Button } from "./ui/button"
-import { Pencil, Trash2, ChevronRight } from "lucide-react"
+import { Pencil, Trash2 } from "lucide-react"
 import type { CategoryWithChildren } from "@/lib/types"
 import {
   Accordion,
@@ -17,12 +17,12 @@ interface CategoryTreeProps {
   onDelete: (id: string) => void
 }
 
-function CategoryNode({ category, onEdit, onDelete }: { 
+function CategoryNode({ category }: { 
   category: CategoryWithChildren
   onEdit: (category: CategoryWithChildren) => void
   onDelete: (id: string) => void 
 }) {
-  const isIncome = category.type === "income"
+  // const isIncome = category.type === "income"
   
   return (
     <div className="relative flex items-center gap-3 py-1.5 flex-1">

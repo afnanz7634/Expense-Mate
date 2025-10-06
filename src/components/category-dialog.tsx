@@ -95,7 +95,7 @@ export function CategoryDialog({ open, onClose, category }: CategoryDialogProps)
     if (open) {
       loadParentCategories()
     }
-  }, [open])
+  }, [open, loadParentCategories])
 
   useEffect(() => {
     if (category) {

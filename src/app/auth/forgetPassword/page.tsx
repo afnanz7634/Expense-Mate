@@ -14,7 +14,9 @@ import { supabase } from "@/lib/supabaseClient"
 
 export default function ForgetPasswordPage() {
     const [email, setEmail] = useState("")
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const [loading, setLoading] = useState(false)
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const [error, setError] = useState<string | null>(null)
     const router = useRouter()
 

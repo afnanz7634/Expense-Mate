@@ -33,7 +33,7 @@ export function DashboardSidebar() {
 
   useEffect(() => {
     loadAccounts()
-  }, [])
+  }, [loadAccounts])
 
   return (
     <div className="flex h-screen w-64 flex-col border-r bg-sidebar">
