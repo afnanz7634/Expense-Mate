@@ -3,7 +3,7 @@
 import { useState } from "react"
 import type { Category, CategoryWithChildren } from "@/lib/types"
 import { Button } from "@/components/ui/button"
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@/components/ui/command"
+import { Command, CommandGroup, CommandItem } from "@/components/ui/command"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { cn } from "@/lib/utils"
 import { Check, ChevronsUpDown } from "lucide-react"
@@ -15,26 +15,26 @@ interface TreeSelectProps {
   categories: Category[]
   placeholder?: string
   disabled?: boolean
+  /** if true → only leaf nodes selectable; if false → all nodes selectable */
+  selectOnlyLeaf?: boolean
 }
 
 // Convert flat categories to hierarchical structure
 function buildCategoryTree(categories: Category[]): CategoryWithChildren[] {
   const categoryMap = new Map<string, CategoryWithChildren>()
   
-  // First pass: Create all category objects
+  // Create map entries
   categories.forEach(cat => {
     categoryMap.set(cat.id, { ...cat, children: [] })
   })
   
-  // Second pass: Build the tree structure
+  // Link parent-child
   const rootCategories: CategoryWithChildren[] = []
   categories.forEach(cat => {
     const category = categoryMap.get(cat.id)!
     if (cat.parent_id) {
       const parent = categoryMap.get(cat.parent_id)
-      if (parent) {
-        parent.children.push(category)
-      }
+      if (parent) parent.children.push(category)
     } else {
       rootCategories.push(category)
     }
@@ -43,16 +43,24 @@ function buildCategoryTree(categories: Category[]): CategoryWithChildren[] {
   return rootCategories
 }
 
-function CategoryNode({ category, level = 0, onSelect, selectedValue }: { 
+function CategoryNode({
+  category,
+  level = 0,
+  onSelect,
+  selectedValue,
+  selectOnlyLeaf
+}: { 
   category: CategoryWithChildren
   level?: number
   onSelect: (id: string) => void
   selectedValue?: string | null
+  selectOnlyLeaf?: boolean
 }) {
   const hasChildren = category.children && category.children.length > 0
   const paddingLeft = `${(level * 12) + 12}px`
   const isSelected = category.id === selectedValue
 
+  // --- Case 1: Leaf node ---
   if (!hasChildren) {
     return (
       <CommandItem
@@ -62,10 +70,7 @@ function CategoryNode({ category, level = 0, onSelect, selectedValue }: {
       >
         <div className="flex items-center gap-2" style={{ paddingLeft }}>
           <Check
-            className={cn(
-              "h-4 w-4",
-              isSelected ? "opacity-100" : "opacity-0"
-            )}
+            className={cn("h-4 w-4", isSelected ? "opacity-100" : "opacity-0")}
           />
           <div
             className="h-2 w-2 rounded-full flex-shrink-0"
@@ -77,27 +82,39 @@ function CategoryNode({ category, level = 0, onSelect, selectedValue }: {
     )
   }
 
+  // --- Case 2: Parent node ---
   return (
     <>
       <CommandItem
         value={category.id}
-        className="cursor-default font-medium text-muted-foreground"
-        onSelect={() => {}}
+        className={cn(
+          "font-medium ",
+          selectOnlyLeaf ? "cursor-default text-muted-foreground" : "cursor-pointer"
+        )}
+        onSelect={() => {
+          if (!selectOnlyLeaf) onSelect(category.id)
+        }}
       >
         <div className="flex items-center gap-2" style={{ paddingLeft }}>
+          <Check
+            className={cn("h-4 w-4", isSelected ? "opacity-100" : "opacity-0")}
+          />
           <div
-            className="h-2 w-2 rounded-full flex-shrink-0 opacity-50"
+            className={`h-2 w-2 rounded-full flex-shrink-0 ${selectOnlyLeaf ? 'opacity-50' : ''}`}
             style={{ backgroundColor: category.color || "#6b7280" }}
           />
           <span>{category.name}</span>
         </div>
       </CommandItem>
+
       {category.children.map(child => (
         <CategoryNode
           key={child.id}
           category={child}
           level={level + 1}
           onSelect={onSelect}
+          selectedValue={selectedValue}
+          selectOnlyLeaf={selectOnlyLeaf}
         />
       ))}
     </>
@@ -109,12 +126,12 @@ export function TreeSelect({
   onChange,
   categories,
   placeholder = "Select a category",
-  disabled = false
+  disabled = false,
+  selectOnlyLeaf = false
 }: TreeSelectProps) {
   const [open, setOpen] = useState(false)
-  
   const categoryTree = buildCategoryTree(categories)
-  // Function to get parent path of a category
+
   const getCategoryPath = (categoryId: string | null): Category[] => {
     if (!categoryId) return []
     const category = categories.find(c => c.id === categoryId)
@@ -135,29 +152,32 @@ export function TreeSelect({
           className="w-full justify-between"
           disabled={disabled}
         >
-          {value === null ? (
-            <span>No Parent (Top Level)</span>
-          ) : selectedCategoryPath.length > 0 ? (
-            <div className="flex items-center gap-2">
-              {selectedCategoryPath.map((cat, index) => (
-                <React.Fragment key={cat.id}>
-                  {index > 0 && <span className="text-muted-foreground">/</span>}
-                  <div className="flex items-center gap-2">
-                    <div
-                      className="h-2 w-2 rounded-full flex-shrink-0"
-                      style={{ backgroundColor: cat.color || "#6b7280" }}
-                    />
-                    <span>{cat.name}</span>
-                  </div>
-                </React.Fragment>
-              ))}
-            </div>
-          ) : (
-            <span className="text-muted-foreground">{placeholder}</span>
-          )}
-          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+          <span className="flex items-center gap-2 w-full justify-between">
+            {value === null ? (
+              <span>No Parent (Top Level)</span>
+            ) : selectedCategoryPath.length > 0 ? (
+              <span className="flex items-center gap-2">
+                {selectedCategoryPath.map((cat, index) => (
+                  <span key={cat.id} className="flex items-center gap-2">
+                    {index > 0 && <span className="text-muted-foreground">/</span>}
+                    <span className="inline-flex items-center gap-1">
+                      <span
+                        className="h-2 w-2 rounded-full flex-shrink-0"
+                        style={{ backgroundColor: cat.color || "#6b7280" }}
+                      />
+                      <span>{cat.name}</span>
+                    </span>
+                  </span>
+                ))}
+              </span>
+            ) : (
+              <span className="text-muted-foreground">{placeholder}</span>
+            )}
+            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+          </span>
         </Button>
       </PopoverTrigger>
+
       <PopoverContent className="w-[--radix-popover-trigger-width] p-0 relative z-[9999]">
         <Command>
           <CommandGroup>
@@ -180,11 +200,13 @@ export function TreeSelect({
                   <span>No Parent (Top Level)</span>
                 </div>
               </CommandItem>
+
               {categoryTree.map(category => (
                 <CategoryNode
                   key={category.id}
                   category={category}
                   selectedValue={value}
+                  selectOnlyLeaf={selectOnlyLeaf}
                   onSelect={(id) => {
                     onChange(id)
                     setOpen(false)

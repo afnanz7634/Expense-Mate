@@ -231,6 +231,7 @@ export function CategoryDialog({ open, onClose, category }: CategoryDialogProps)
               categories={categories.filter(c => c.type === type && (!category || c.id !== category.id))}
               placeholder="Select a parent category"
               disabled={loading}
+              selectOnlyLeaf={false}
             />
           </div>
 
