@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import type { Transaction, Account, Category, TransactionType } from "@/lib/types"
 import { Loader2 } from "lucide-react"
 import { supabase } from "@/lib/supabaseClient"
+import { useAccountStore } from "@/lib/stores/account-store"
 
 interface TransactionDialogProps {
   open: boolean
@@ -125,6 +126,7 @@ export function TransactionDialog({ open, onClose, transaction }: TransactionDia
         })
         setLoading(false)
       } else {
+        await loadAccounts()
         toast({
           title: "Success",
           description: "Transaction updated successfully",
@@ -151,6 +153,7 @@ export function TransactionDialog({ open, onClose, transaction }: TransactionDia
         })
         setLoading(false)
       } else {
+        await loadAccounts()
         toast({
           title: "Success",
           description: "Transaction created successfully",
