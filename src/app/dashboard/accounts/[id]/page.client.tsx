@@ -40,7 +40,7 @@ export function AccountPageClient({ account, transactions, chartTransactions }: 
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
   const router = useRouter()
-
+  console.log(transactions)
   const totalIncome =
     transactions?.filter((t) => t.type === "income").reduce((sum, t) => sum + Number(t.amount), 0) || 0
   const totalExpenses =

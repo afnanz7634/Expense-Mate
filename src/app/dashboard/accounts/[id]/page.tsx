@@ -21,7 +21,6 @@ export default async function AccountDetailPage({ params }: { params: Promise<{ 
     .select("*, category:categories(*)")
     .eq("account_id", id)
     .order("date", { ascending: false })
-    .limit(10)
 
   const sixMonthsAgo = new Date()
   sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6)

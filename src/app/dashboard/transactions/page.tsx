@@ -10,6 +10,7 @@ import { TransactionFilters } from "@/components/transaction-filter"
 import { format } from "date-fns"
 import { exportToCSV } from "@/lib/export"
 import { supabase } from "@/lib/supabaseClient"
+import { useAccountStore } from "@/lib/stores/account-store"
 
 interface TransactionWithDetails extends Transaction {
   account: Account
@@ -21,6 +22,7 @@ export default function TransactionsPage() {
   const [loading, setLoading] = useState(true)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null)
+  const {loadAccounts} = useAccountStore()
 
   useEffect(() => {
     loadTransactions()
@@ -38,6 +40,7 @@ export default function TransactionsPage() {
       console.error("Error fetching transactions:", error.message)
     } else if (data) {
       setTransactions(data as TransactionWithDetails[])
+      loadAccounts()
     }
 
     setLoading(false)
@@ -175,7 +178,7 @@ export default function TransactionsPage() {
                     <p
                       className={`text-lg font-bold ${transaction.type === "income" ? "text-green-600" : "text-red-600"}`}
                     >
-                      {transaction.type === "income" ? "+" : "-"}${Number(transaction.amount).toFixed(2)}
+                      {transaction.type === "income" ? "+" : "-"}{Number(transaction.amount).toFixed(2)}
                     </p>
                     <div className="flex gap-1">
                       <Button variant="ghost" size="icon" onClick={() => handleEdit(transaction)}>

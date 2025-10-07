@@ -8,6 +8,8 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import type { Account, Category } from "@/lib/types"
 import { X } from "lucide-react"
+import { useAccountStore } from "@/lib/stores/account-store"
+import { useCategoryStore } from "@/lib/stores/category-store"
 
 interface TransactionFiltersProps {
   onFilter: (filters: {
@@ -25,27 +27,11 @@ export function TransactionFilters({ onFilter }: TransactionFiltersProps) {
   const [type, setType] = useState<string>("all")
   const [startDate, setStartDate] = useState<string>("")
   const [endDate, setEndDate] = useState<string>("")
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [accounts, setAccounts] = useState<Account[]>([])
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [categories, setCategories] = useState<Category[]>([])
 
-  useEffect(() => {
-    loadAccounts()
-    loadCategories()
-  }, [])
+  const {accounts} = useAccountStore();
+  const {categories} = useCategoryStore()
 
-  const loadAccounts = async () => {
-    // TODO: Replace with your database query
-    // const { data } = await supabase.from("accounts").select("*").order("name", { ascending: true })
-    // if (data) setAccounts(data)
-  }
 
-  const loadCategories = async () => {
-    // TODO: Replace with your database query
-    // const { data } = await supabase.from("categories").select("*").order("name", { ascending: true })
-    // if (data) setCategories(data)
-  }
 
   const handleApply = () => {
     onFilter({

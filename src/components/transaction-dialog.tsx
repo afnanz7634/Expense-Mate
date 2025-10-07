@@ -33,6 +33,7 @@ export function TransactionDialog({ open, onClose, transaction }: TransactionDia
   const [accounts, setAccounts] = useState<Account[]>([])
   const [categories, setCategories] = useState<Category[]>([])
    const [parentId, setParentId] = useState<string | null>(null)
+   const {loadAccounts: loadAccountsInStore} = useAccountStore()
 
   useEffect(() => {
     if (open) {
@@ -64,6 +65,7 @@ export function TransactionDialog({ open, onClose, transaction }: TransactionDia
     if (error) {
       console.error("Error loading accounts:", error.message)
     } else if (data) {
+      loadAccountsInStore()
       setAccounts(data)
       if (!transaction && data.length > 0) {
         setAccountId(data[0].id)
