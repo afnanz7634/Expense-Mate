@@ -132,7 +132,7 @@ export function AccountPageClient({ account, transactions, chartTransactions }: 
             <ArrowUpRight className="h-4 w-4 text-green-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-600">${totalIncome.toFixed(2)}</div>
+            <div className="text-2xl font-bold text-green-600">{account.currency} {totalIncome.toFixed(2)}</div>
           </CardContent>
         </Card>
         <Card>
@@ -141,7 +141,7 @@ export function AccountPageClient({ account, transactions, chartTransactions }: 
             <ArrowDownRight className="h-4 w-4 text-red-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-red-600">${totalExpenses.toFixed(2)}</div>
+            <div className="text-2xl font-bold text-red-600">{account.currency} {totalExpenses.toFixed(2)}</div>
           </CardContent>
         </Card>
       </div>
@@ -184,7 +184,7 @@ export function AccountPageClient({ account, transactions, chartTransactions }: 
                     <p
                       className={`text-lg font-bold ${transaction.type === "income" ? "text-green-600" : "text-red-600"}`}
                     >
-                      {transaction.type === "income" ? "+" : "-"}${Number(transaction.amount).toFixed(2)}
+                      {transaction.type === "income" ? "+" : "-"}{account.currency} {Number(transaction.amount).toFixed(2)}
                     </p>
                   </div>
                 </div>
