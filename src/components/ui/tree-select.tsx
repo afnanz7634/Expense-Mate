@@ -10,7 +10,7 @@ import { Check, ChevronsUpDown } from "lucide-react"
 import { ScrollArea } from "./scroll-area"
 
 interface TreeSelectProps {
-  value?: string | null
+  value: string | null | undefined
   onChange: (value: string | null) => void
   categories: Category[]
   placeholder?: string
@@ -34,7 +34,9 @@ function buildCategoryTree(categories: Category[]): CategoryWithChildren[] {
     const category = categoryMap.get(cat.id)!
     if (cat.parent_id) {
       const parent = categoryMap.get(cat.parent_id)
-      if (parent) parent.children.push(category)
+      if (parent && parent.children) {
+        parent.children.push(category)
+      }
     } else {
       rootCategories.push(category)
     }
@@ -107,7 +109,7 @@ function CategoryNode({
         </div>
       </CommandItem>
 
-      {category.children.map(child => (
+      {category.children?.map(child => (
         <CategoryNode
           key={child.id}
           category={child}
@@ -140,7 +142,7 @@ export function TreeSelect({
     return [...getCategoryPath(category.parent_id), category]
   }
 
-  const selectedCategoryPath = getCategoryPath(value)
+  const selectedCategoryPath = getCategoryPath(value ?? null)
 
   return (
     <Popover open={open} onOpenChange={setOpen} modal>
