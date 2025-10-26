@@ -3,14 +3,15 @@
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Plus, Pencil, Trash2, Download } from "lucide-react"
+import { Plus, Download } from "lucide-react"
 import type { Transaction, Account, Category } from "@/lib/types"
 import { TransactionDialog } from "@/components/transaction-dialog"
-import { TransactionFilters } from "@/components/transaction-filter"
-import { format } from "date-fns"
 import { exportToCSV } from "@/lib/export"
 import { supabase } from "@/lib/supabaseClient"
 import { useAccountStore } from "@/lib/stores/account-store"
+import { useCategoryStore } from "@/lib/stores/category-store"
+import { DataTable } from "@/components/ui/data-table"
+import { createTransactionColumns } from "@/components/transaction-columns"
 
 interface TransactionWithDetails extends Transaction {
   account: Account
@@ -19,14 +20,22 @@ interface TransactionWithDetails extends Transaction {
 
 export default function TransactionsPage() {
   const [transactions, setTransactions] = useState<TransactionWithDetails[]>([])
+  const [filteredTransactions, setFilteredTransactions] = useState<TransactionWithDetails[]>([])
   const [loading, setLoading] = useState(true)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null)
-  const {loadAccounts} = useAccountStore()
+  const { accounts, loadAccounts } = useAccountStore()
+  const { categories, loadCategories } = useCategoryStore()
 
   useEffect(() => {
     loadTransactions()
+    loadAccounts()
+    loadCategories()
   }, [])
+
+  useEffect(() => {
+    setFilteredTransactions(transactions)
+  }, [transactions])
 
   const loadTransactions = async () => {
     setLoading(true)
@@ -58,7 +67,7 @@ export default function TransactionsPage() {
     }
   }
 
-  const handleEdit = (transaction: Transaction) => {
+  const handleEdit = (transaction: TransactionWithDetails) => {
     setEditingTransaction(transaction)
     setDialogOpen(true)
   }
@@ -69,53 +78,83 @@ export default function TransactionsPage() {
     loadTransactions()
   }
 
-  const handleFilter = async (filters: {
+  const handleFilter = (filters: {
     accountId?: string
     categoryId?: string
     type?: string
     startDate?: string
     endDate?: string
   }) => {
-    setLoading(true)
-
-    let query = supabase
-      .from("transactions")
-      .select("*, account:accounts(*), category:categories(*)")
-      .order("date", { ascending: false })
+    let filtered = [...transactions]
 
     if (filters.accountId && filters.accountId !== "all") {
-      query = query.eq("account_id", filters.accountId)
+      filtered = filtered.filter(t => t.account_id === filters.accountId)
     }
 
     if (filters.categoryId && filters.categoryId !== "all") {
-      query = query.eq("category_id", filters.categoryId)
+      // Filter by category and its children
+      const categoryIds = getCategoryAndChildren(filters.categoryId)
+      filtered = filtered.filter(t => categoryIds.includes(t.category_id))
     }
 
     if (filters.type && filters.type !== "all") {
-      query = query.eq("type", filters.type)
+      filtered = filtered.filter(t => t.type === filters.type)
     }
 
     if (filters.startDate) {
-      query = query.gte("date", filters.startDate)
+      filtered = filtered.filter(t => t.date >= filters.startDate!)
     }
 
     if (filters.endDate) {
-      query = query.lte("date", filters.endDate)
+      filtered = filtered.filter(t => t.date <= filters.endDate!)
     }
 
-    const { data, error } = await query
-    if (error) {
-      console.error("Error filtering transactions:", error.message)
-    } else if (data) {
-      setTransactions(data as TransactionWithDetails[])
-    }
+    setFilteredTransactions(filtered)
+  }
 
-    setLoading(false)
+  // Helper function to get category and all its children
+  const getCategoryAndChildren = (categoryId: string): string[] => {
+    const result = [categoryId]
+    const flatCategories = getAllCategories(categories)
+    
+    const addChildren = (parentId: string) => {
+      const children = flatCategories.filter(c => c.parent_id === parentId)
+      children.forEach(child => {
+        result.push(child.id)
+        addChildren(child.id)
+      })
+    }
+    
+    addChildren(categoryId)
+    return result
+  }
+
+  // Helper function to flatten category tree
+  const getAllCategories = (categoryTree: any[]): Category[] => {
+    const result: Category[] = []
+    
+    const flatten = (cats: any[]) => {
+      cats.forEach(cat => {
+        result.push(cat)
+        if (cat.children && cat.children.length > 0) {
+          flatten(cat.children)
+        }
+      })
+    }
+    
+    flatten(categoryTree)
+    return result
   }
 
   const handleExport = () => {
-    exportToCSV(transactions)
+    exportToCSV(filteredTransactions)
   }
+
+  const columns = createTransactionColumns({
+    onEdit: handleEdit,
+    onDelete: handleDelete,
+    allCategories: getAllCategories(categories),
+  })
 
   return (
     <div className="space-y-6">
@@ -125,7 +164,7 @@ export default function TransactionsPage() {
           <p className="text-muted-foreground">View and manage all your transactions</p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={handleExport} disabled={transactions.length === 0}>
+          <Button variant="outline" onClick={handleExport} disabled={filteredTransactions.length === 0}>
             <Download className="mr-2 h-4 w-4" />
             Export CSV
           </Button>
@@ -136,66 +175,42 @@ export default function TransactionsPage() {
         </div>
       </div>
 
-      <TransactionFilters onFilter={handleFilter} />
-
       <Card>
         <CardHeader>
-          <CardTitle>All Transactions</CardTitle>
+          <CardTitle className="flex items-center justify-between">
+            <span>All Transactions</span>
+            {filteredTransactions.length !== transactions.length && (
+              <span className="text-sm font-normal text-muted-foreground">
+                Showing {filteredTransactions.length} of {transactions.length} transactions
+              </span>
+            )}
+          </CardTitle>
         </CardHeader>
         <CardContent>
           {loading ? (
             <div className="text-center py-8">
               <p className="text-muted-foreground">Loading...</p>
             </div>
-          ) : transactions.length > 0 ? (
-            <div className="space-y-2">
-              {transactions.map((transaction) => (
-                <div
-                  key={transaction.id}
-                  className="flex items-center justify-between rounded-lg border p-4 transition-colors hover:bg-muted/50"
-                >
-                  <div className="flex items-center gap-4">
-                    <div
-                      className="h-10 w-10 rounded-full flex items-center justify-center"
-                      style={{ backgroundColor: transaction.category.color || "#6b7280" }}
-                    >
-                      <span className="text-white text-xs font-bold">
-                        {transaction.category.name.charAt(0).toUpperCase()}
-                      </span>
-                    </div>
-                    <div>
-                      <p className="font-medium">{transaction.description || transaction.category.name}</p>
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <span>{transaction.account.name}</span>
-                        <span>•</span>
-                        <span>{transaction.category.name}</span>
-                        <span>•</span>
-                        <span>{format(new Date(transaction.date), "MMM dd, yyyy")}</span>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-4">
-                    <p
-                      className={`text-lg font-bold ${transaction.type === "income" ? "text-green-600" : "text-red-600"}`}
-                    >
-                      {transaction.type === "income" ? "+" : "-"}{Number(transaction.amount).toFixed(2)}
-                    </p>
-                    <div className="flex gap-1">
-                      <Button variant="ghost" size="icon" onClick={() => handleEdit(transaction)}>
-                        <Pencil className="h-4 w-4" />
-                      </Button>
-                      <Button variant="ghost" size="icon" onClick={() => handleDelete(transaction.id)}>
-                        <Trash2 className="h-4 w-4 text-destructive" />
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
           ) : (
-            <div className="text-center py-8">
-              <p className="text-muted-foreground">No transactions found</p>
-            </div>
+            <DataTable 
+              columns={columns} 
+              data={filteredTransactions} 
+              searchPlaceholder="Search transactions..."
+              searchColumn="description"
+              enableFilters={true}
+              filterOptions={{
+                accounts: accounts.map(account => ({
+                  id: account.id,
+                  name: account.name
+                })),
+                categories: getAllCategories(categories),
+                types: [
+                  { value: "income", label: "Income" },
+                  { value: "expense", label: "Expense" }
+                ]
+              }}
+              onFilter={handleFilter}
+            />
           )}
         </CardContent>
       </Card>

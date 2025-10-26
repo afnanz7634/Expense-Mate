@@ -29,6 +29,13 @@ export default async function DashboardPage() {
       .gte("date", startOfMonth)
       .lte("date", endOfMonth)
 
+    // Fetch all categories for hierarchical display
+    const { data: categories } = await supabase
+      .from("categories")
+      .select("*")
+      .eq("user_id", user.id)
+      .order("name", { ascending: true })
+
     const sixMonthsAgo = new Date()
     sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6)
     const { data: chartTransactions } = await supabase
@@ -96,9 +103,12 @@ export default async function DashboardPage() {
                 </Card>
             </div>
 
-            <div className="grid gap-6 md:grid-cols-2">
+            <div className="grid gap-6 md:grid-cols-1">
                 <ExpenseChart transactions={chartTransactions || []} />
-                <CategoryChart transactions={transactions || []} />
+                <CategoryChart 
+                    transactions={transactions || []} 
+                    categories={categories || []}
+                />
             </div>
 
             <Card>

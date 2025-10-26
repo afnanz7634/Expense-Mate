@@ -83,40 +83,42 @@ function CategoryBranch({ category, level = 0, onEdit, onDelete }: {
   }
 
   return (
-    <Accordion type="multiple" className="ml-4">
-      <AccordionItem value={category.id} className="border-none">
-        <AccordionTrigger 
-          className={cn(
-            "p-0 hover:no-underline",
-            "data-[state=open]:pb-0",
-            "[&>svg]:h-4 [&>svg]:w-4 [&>svg]:shrink-0 [&>svg]:text-muted-foreground/50",
-            "[&>svg]:transition-transform"
-          )}
-        >
-          <div className="flex-1 flex items-center pr-2 w-full">
-            <CategoryNode 
-              category={category} 
-              onEdit={onEdit} 
-              onDelete={onDelete}
-            />
-            <ActionButtons />
-          </div>
-        </AccordionTrigger>
-        <AccordionContent className="pt-1 pb-0">
-          <div className="ml-[7px] border-l-2 border-muted pl-4">
-            {category.children?.map(child => (
-              <CategoryBranch
-                key={child.id}
-                category={child}
-                level={level + 1}
-                onEdit={onEdit}
+    <div className="ml-4">
+      <div className="flex items-center pr-2 group">
+        <Accordion type="multiple" className="flex-1">
+          <AccordionItem value={category.id} className="border-none">
+            <AccordionTrigger 
+              className={cn(
+                "p-0 hover:no-underline",
+                "data-[state=open]:pb-0",
+                "[&>svg]:h-4 [&>svg]:w-4 [&>svg]:shrink-0 [&>svg]:text-muted-foreground/50",
+                "[&>svg]:transition-transform"
+              )}
+            >
+              <CategoryNode 
+                category={category} 
+                onEdit={onEdit} 
                 onDelete={onDelete}
               />
-            ))}
-          </div>
-        </AccordionContent>
-      </AccordionItem>
-    </Accordion>
+            </AccordionTrigger>
+            <AccordionContent className="pt-1 pb-0">
+              <div className="ml-[7px] border-l-2 border-muted pl-4">
+                {category.children?.map(child => (
+                  <CategoryBranch
+                    key={child.id}
+                    category={child}
+                    level={level + 1}
+                    onEdit={onEdit}
+                    onDelete={onDelete}
+                  />
+                ))}
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+        </Accordion>
+        <ActionButtons />
+      </div>
+    </div>
   )
 }
 
