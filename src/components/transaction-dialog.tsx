@@ -10,11 +10,11 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { TreeSelect } from "@/components/ui/tree-select"
 import type { Transaction, Account, Category, TransactionType } from "@/lib/types"
 import { Loader2 } from "lucide-react"
 import { supabase } from "@/lib/supabaseClient"
 import { useAccountStore } from "@/lib/stores/account-store"
-import { TreeSelect } from "./ui/tree-select"
 
 interface TransactionDialogProps {
   open: boolean
@@ -24,7 +24,6 @@ interface TransactionDialogProps {
 
 export function TransactionDialog({ open, onClose, transaction }: TransactionDialogProps) {
   const [accountId, setAccountId] = useState("")
-  const [categoryId, setCategoryId] = useState("")
   const [amount, setAmount] = useState("")
   const [type, setType] = useState<TransactionType>("expense")
   const [description, setDescription] = useState("")
@@ -45,14 +44,14 @@ export function TransactionDialog({ open, onClose, transaction }: TransactionDia
   useEffect(() => {
     if (transaction) {
       setAccountId(transaction.account_id)
-      setCategoryId(transaction.category_id)
+      setParentId(transaction.category_id)
       setAmount(transaction.amount.toString())
       setType(transaction.type)
       setDescription(transaction.description || "")
       setDate(transaction.date)
     } else {
       setAccountId("")
-      setCategoryId("")
+      setParentId(null)
       setAmount("")
       setType("expense")
       setDescription("")
@@ -86,7 +85,7 @@ export function TransactionDialog({ open, onClose, transaction }: TransactionDia
 
   useEffect(() => {
     if (filteredCategories.length > 0 && !transaction) {
-      setCategoryId(filteredCategories[0].id)
+      setParentId(filteredCategories[0].id)
     }
   }, [type, filteredCategories, transaction])
 
@@ -219,21 +218,14 @@ export function TransactionDialog({ open, onClose, transaction }: TransactionDia
                     </div>
           {/* <div className="space-y-2">
             <Label htmlFor="category">Category</Label>
-            <Select value={categoryId} onValueChange={setCategoryId} disabled={loading}>
-              <SelectTrigger id="category">
-                <SelectValue placeholder="Select category" />
-              </SelectTrigger>
-              <SelectContent>
-                {filteredCategories.map((category) => (
-                  <SelectItem key={category.id} value={category.id}>
-                    <div className="flex items-center gap-2">
-                      <div className="h-3 w-3 rounded-full" style={{ backgroundColor: category.color || "#6b7280" }} />
-                      {category.name}
-                    </div>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <TreeSelect
+              value={parentId}
+              onChange={setParentId}
+              categories={filteredCategories}
+              placeholder="Select a category"
+              disabled={loading}
+              selectOnlyLeaf={false}
+            />
           </div> */}
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">

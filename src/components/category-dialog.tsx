@@ -68,16 +68,6 @@ export function CategoryDialog({ open, onClose, category }: CategoryDialogProps)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-
-  // Helper function to check if a category is a descendant of another
-  const isDescendant = (cat: Category, ancestorId: string, allCategories: Category[]): boolean => {
-    if (!cat.parent_id) return false
-    if (cat.parent_id === ancestorId) return true
-    const parent = allCategories.find((c) => c.id === cat.parent_id)
-    return parent ? isDescendant(parent, ancestorId, allCategories) : false
-  }
-
-
   useEffect(() => {
     if (open) {
       supabase

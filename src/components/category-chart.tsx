@@ -3,7 +3,7 @@
 import { useState, useMemo } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Pie, PieChart, Cell, ResponsiveContainer, Legend, Tooltip } from "recharts"
+import { Pie, PieChart, Cell, ResponsiveContainer, Tooltip } from "recharts"
 import { ChevronLeft, ChevronRight } from "lucide-react"
 import type { Transaction, Category } from "@/lib/types"
 
@@ -54,7 +54,8 @@ export function CategoryChart({ transactions, categories }: CategoryChartProps) 
     
     const max = Math.max(r, g, b)
     const min = Math.min(r, g, b)
-    let h = 0, s = 0, l = (max + min) / 2
+    let h = 0, s = 0
+    const l = (max + min) / 2
     
     if (max !== min) {
       const d = max - min
@@ -185,7 +186,7 @@ export function CategoryChart({ transactions, categories }: CategoryChartProps) 
     const generateDistinctColors = (items: ChartDataItem[]): ChartDataItem[] => {
       const colorMap = new Map<string, number>()
       
-      return items.map((item, index) => {
+      return items.map((item) => {
         const baseColor = item.color
         const colorCount = colorMap.get(baseColor) || 0
         colorMap.set(baseColor, colorCount + 1)
