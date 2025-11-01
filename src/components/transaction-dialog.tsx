@@ -83,12 +83,6 @@ export function TransactionDialog({ open, onClose, transaction }: TransactionDia
 
   const filteredCategories = categories.filter((c) => c.type === type)
 
-  useEffect(() => {
-    if (filteredCategories.length > 0 && !transaction) {
-      setParentId(filteredCategories[0].id)
-    }
-  }, [type, filteredCategories, transaction])
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
@@ -101,6 +95,16 @@ export function TransactionDialog({ open, onClose, transaction }: TransactionDia
       toast({
         title: "Authentication Error",
         description: "You must be logged in",
+        variant: "destructive",
+      })
+      setLoading(false)
+      return
+    }
+
+    if (!parentId) {
+      toast({
+        title: "Validation Error",
+        description: "Please select a category",
         variant: "destructive",
       })
       setLoading(false)
@@ -206,7 +210,7 @@ export function TransactionDialog({ open, onClose, transaction }: TransactionDia
             </Select>
           </div>
            <div className="space-y-2">
-                      <Label htmlFor="parent">Parent Category (Optional)</Label>
+                      <Label htmlFor="parent">Category</Label>
                       <TreeSelect
                         value={parentId}
                         onChange={setParentId}
